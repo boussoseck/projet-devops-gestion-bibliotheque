@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bibliothèque Numérique — DIT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===================== ÉCRAN DE CONNEXION ===================== -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="brand brand-center">
+      <div class="brand-mark">DIT</div>
+      <div class="brand-text">
+        <h1>Bibliothèque Numérique</h1>
+        <p>Dakar Institute of Technology</p>
+      </div>
+    </div>
+
+    <form id="form-login" class="login-form">
+      <h2>Connexion</h2>
+      <label>Identifiant <input type="text" id="login-id" placeholder="ex: ETU-2026-001" required autocomplete="username"></label>
+      <label>Mot de passe <input type="password" id="login-password" required autocomplete="current-password"></label>
+      <button type="submit" class="btn-primary btn-block">Se connecter</button>
+      <p class="login-hint">Étudiants et professeurs : vos identifiants vous ont été communiqués par e-mail par le personnel administratif.</p>
+      <p class="login-switch">Personnel administratif — <a href="#" id="link-show-register">créer un compte</a></p>
+    </form>
+
+    <form id="form-register-admin" class="login-form hidden">
+      <h2>Créer un compte — Personnel administratif</h2>
+      <label>Identifiant <input type="text" id="reg-id" placeholder="ex: ADM-001" required></label>
+      <label>Nom <input type="text" id="reg-nom" required></label>
+      <label>Prénom <input type="text" id="reg-prenom" required></label>
+      <label>Email <input type="email" id="reg-email" required></label>
+      <label>Téléphone <input type="tel" id="reg-telephone"></label>
+      <label>Mot de passe <input type="password" id="reg-password" required minlength="4"></label>
+      <button type="submit" class="btn-primary btn-block">Créer mon compte</button>
+      <p class="login-switch"><a href="#" id="link-show-login">← Retour à la connexion</a></p>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== APPLICATION ===================== -->
+<div id="app" class="hidden">
+
+<header class="navbar">
+  <div class="navbar-inner">
+    <div class="brand">
+      <div class="brand-mark">DIT</div>
+      <div class="brand-text">
+        <h1>Bibliothèque Numérique</h1>
+        <p>Dakar Institute of Technology</p>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="livres" data-role="all">📚 Livres</button>
+      <button class="tab" data-tab="utilisateurs" data-role="admin">👤 Utilisateurs</button>
+      <button class="tab" data-tab="emprunts" data-role="admin">🔄 Emprunts</button>
+      <button class="tab" data-tab="historique" data-role="admin">🕒 Historique</button>
+      <button class="tab" data-tab="mesemprunts" data-role="user">🕒 Mes emprunts</button>
+      <button class="tab" data-tab="emails" data-role="admin">✉️ E-mails envoyés</button>
+    </nav>
+  </div>
+  <div class="navbar-inner user-bar">
+    <div class="user-box">
+      <span id="user-name">—</span>
+      <span id="user-role-badge" class="badge badge-accent">—</span>
+    </div>
+    <div class="user-actions">
+      <button class="btn-ghost btn-small" id="btn-change-password">🔑 Changer le mot de passe</button>
+      <button class="btn-ghost btn-small" id="btn-logout">↪ Déconnexion</button>
+    </div>
+  </div>
+</header>
+
+<div id="password-banner" class="password-banner hidden">
+  ⚠️ Vous utilisez le mot de passe par défaut. Pensez à le changer dès maintenant.
+  <button class="btn-mini" id="btn-banner-change-password">Changer maintenant</button>
+</div>
+
+<main>
+
+  <!-- ===================== LIVRES / CATALOGUE ===================== -->
+  <section id="panel-livres" class="panel active">
+    <div class="panel-head">
+      <h2 id="livres-title">Catalogue des livres</h2>
+      <button class="btn-primary" id="btn-new-book" data-role="admin">+ Ajouter un livre</button>
+    </div>
+
+    <div class="filters-bar">
+      <input type="text" id="search-books" placeholder="🔎 Rechercher (titre, auteur, éditeur, ISBN, catégorie)…">
+      <input type="text" id="filter-books-auteur" placeholder="Filtrer par auteur">
+      <input type="text" id="filter-books-editeur" placeholder="Filtrer par éditeur">
+      <input type="text" id="filter-books-categorie" placeholder="Filtrer par catégorie">
+      <select id="filter-books-statut">
+        <option value="">Tous les statuts</option>
+        <option value="disponible">Disponible</option>
+        <option value="emprunte">Emprunté (stock épuisé)</option>
+      </select>
+      <button class="btn-ghost" id="btn-reset-books">↺ Réinitialiser</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="dit-table" id="table-books">
+        <thead>
+          <tr>
+            <th data-sort="titre">Titre</th>
+            <th data-sort="auteur">Auteur</th>
+            <th data-sort="editeur">Éditeur</th>
+            <th data-sort="isbn">ISBN</th>
+            <th data-sort="categorie">Catégorie</th>
+            <th data-sort="date_edition">Édition</th>
+            <th data-sort="quantite_disponible">Stock</th>
+            <th class="col-actions" data-role="admin">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="books-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== UTILISATEURS (admin) ===================== -->
+  <section id="panel-utilisateurs" class="panel">
+    <div class="panel-head">
+      <h2>Registre des utilisateurs</h2>
+      <button class="btn-primary" id="btn-new-user">+ Nouvel utilisateur</button>
+    </div>
+    <p class="hint-text">Un compte est créé automatiquement pour chaque utilisateur (identifiant = ID utilisateur, mot de passe initial = ID utilisateur). Un e-mail (simulé) est envoyé avec les accès — consultable dans l'onglet « E-mails envoyés ».</p>
+
+    <div class="filters-bar">
+      <input type="text" id="search-users" placeholder="🔎 Rechercher (nom, prénom, email, ID)…">
+      <select id="filter-user-type">
+        <option value="">Tous les types</option>
+        <option value="etudiant">Étudiant</option>
+        <option value="professeur">Professeur</option>
+        <option value="personnel_administratif">Personnel administratif</option>
+      </select>
+      <button class="btn-ghost" id="btn-reset-users">↺ Réinitialiser</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="dit-table" id="table-users">
+        <thead>
+          <tr>
+            <th data-sort="id_utilisateur">ID Utilisateur</th>
+            <th data-sort="nom">Nom</th>
+            <th data-sort="prenom">Prénom</th>
+            <th data-sort="email">Email</th>
+            <th>Téléphone</th>
+            <th data-sort="type_utilisateur">Type</th>
+            <th data-sort="faculte">Faculté</th>
+            <th data-sort="departement">Département</th>
+            <th data-sort="classe">Classe</th>
+            <th data-sort="date">Inscrit le</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== EMPRUNTS (admin) ===================== -->
+  <section id="panel-emprunts" class="panel">
+    <div class="panel-head">
+      <h2>Registre des emprunts</h2>
+      <button class="btn-primary" id="btn-new-loan">+ Nouvel emprunt</button>
+    </div>
+
+    <div class="filters-bar">
+      <select id="filter-loan-status">
+        <option value="">Tous les statuts</option>
+        <option value="en_cours">En cours</option>
+        <option value="retourne">Retourné</option>
+        <option value="en_retard">En retard</option>
+      </select>
+      <button class="btn-secondary" id="btn-show-late">⚠ Voir les retards</button>
+      <button class="btn-ghost" id="btn-reset-loans">↺ Réinitialiser</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="dit-table" id="table-loans">
+        <thead>
+          <tr>
+            <th data-sort="isbn">Livre</th>
+            <th>Utilisateur</th>
+            <th data-sort="isbn">ISBN</th>
+            <th data-sort="date">Emprunté le</th>
+            <th data-sort="date_retour_prevue">Retour prévu</th>
+            <th data-sort="statut">Statut</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="loans-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== HISTORIQUE (admin) ===================== -->
+  <section id="panel-historique" class="panel">
+    <div class="panel-head">
+      <h2>Historique détaillé des emprunts</h2>
+      <div class="export-buttons">
+        <button class="btn-secondary" id="btn-export-csv">⬇ Export CSV</button>
+        <button class="btn-secondary" id="btn-export-pdf">⬇ Export PDF</button>
+      </div>
+    </div>
+
+    <div class="filters-bar">
+      <input type="text" id="hist-search" placeholder="🔎 Utilisateur, titre, auteur ou ISBN…">
+    </div>
+    <div class="filters-bar">
+      <select id="hist-period">
+        <option value="">Toute période</option>
+        <option value="today">Aujourd'hui</option>
+        <option value="week">Cette semaine</option>
+        <option value="month">Ce mois</option>
+        <option value="year">Cette année</option>
+        <option value="custom">Plage personnalisée…</option>
+      </select>
+      <input type="date" id="hist-date-start" class="hidden">
+      <input type="date" id="hist-date-end" class="hidden">
+      <select id="hist-user"><option value="">Tous les utilisateurs</option></select>
+      <select id="hist-book"><option value="">Tous les livres</option></select>
+      <select id="hist-status">
+        <option value="">Tous les statuts</option>
+        <option value="en_cours">En cours</option>
+        <option value="retourne">Retourné</option>
+        <option value="en_retard">En retard</option>
+      </select>
+    </div>
+    <div class="filters-bar">
+      <label class="inline-label">Trier par
+        <select id="hist-sort">
+          <option value="user_asc">Utilisateur A→Z</option>
+          <option value="user_desc">Utilisateur Z→A</option>
+          <option value="book_asc">Livre A→Z</option>
+          <option value="book_desc">Livre Z→A</option>
+          <option value="emprunt_desc" selected>Date d'emprunt (récent → ancien)</option>
+          <option value="emprunt_asc">Date d'emprunt (ancien → récent)</option>
+          <option value="retour_desc">Date de retour (récent → ancien)</option>
+          <option value="retour_asc">Date de retour (ancien → récent)</option>
+        </select>
+      </label>
+      <button class="btn-ghost" id="btn-reset-hist">↺ Réinitialiser les filtres</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="dit-table" id="table-historique">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Utilisateur</th>
+            <th>Titre</th>
+            <th>Auteur</th>
+            <th>ISBN</th>
+            <th>Date emprunt</th>
+            <th>Retour prévu</th>
+            <th>Retour effectif</th>
+            <th>Statut</th>
+            <th>Durée (j)</th>
+          </tr>
+        </thead>
+        <tbody id="historique-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== MES EMPRUNTS (étudiant / professeur) ===================== -->
+  <section id="panel-mesemprunts" class="panel">
+    <div class="panel-head">
+      <h2>Mes emprunts</h2>
+    </div>
+
+    <div class="filters-bar">
+      <select id="mine-status">
+        <option value="">Tous les statuts</option>
+        <option value="en_cours">Emprunté</option>
+        <option value="retourne">Rendu</option>
+        <option value="en_retard">Délai dépassé</option>
+      </select>
+      <label class="inline-label">Trier par date
+        <select id="mine-sort">
+          <option value="desc">Plus récent → plus ancien</option>
+          <option value="asc">Plus ancien → plus récent</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="dit-table" id="table-mesemprunts">
+        <thead>
+          <tr>
+            <th>Livre</th>
+            <th>Auteur</th>
+            <th>Emprunté le</th>
+            <th>Retour prévu</th>
+            <th>Statut</th>
+            <th>Jours restants / retard</th>
+          </tr>
+        </thead>
+        <tbody id="mesemprunts-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== E-MAILS ENVOYÉS (admin) ===================== -->
+  <section id="panel-emails" class="panel">
+    <div class="panel-head">
+      <h2>E-mails envoyés (simulation)</h2>
+    </div>
+    <p class="hint-text">Aucun serveur SMTP réel n'est configuré : les e-mails (création de compte, notifications) sont simulés et journalisés ici.</p>
+    <div class="table-wrapper">
+      <table class="dit-table" id="table-emails">
+        <thead>
+          <tr>
+            <th>Destinataire</th>
+            <th>Sujet</th>
+            <th>Contenu</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="emails-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+</div><!-- /#app -->
+
+<div id="toast" class="toast"></div>
+
+<!-- ===================== MODALES ===================== -->
+
+<div class="modal-overlay" id="modal-book">
+  <form class="modal-card" id="form-book">
+    <h3>Fiche livre</h3>
+    <input type="hidden" id="book-id">
+    <label>Titre <input type="text" id="book-titre" required></label>
+    <label>Auteur <input type="text" id="book-auteur" required></label>
+    <label>Éditeur <input type="text" id="book-editeur"></label>
+    <label>ISBN <input type="text" id="book-isbn" required></label>
+    <label>Date d'édition <input type="date" id="book-date-edition"></label>
+    <label>Catégorie <input type="text" id="book-categorie"></label>
+    <label>Nombre d'exemplaires <input type="number" id="book-quantite" min="1" value="1" required></label>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close>Annuler</button>
+      <button type="submit" class="btn-primary">Enregistrer</button>
+    </div>
+  </form>
+</div>
+
+<div class="modal-overlay" id="modal-user">
+  <form class="modal-card" id="form-user">
+    <h3>Fiche utilisateur</h3>
+    <input type="hidden" id="user-id">
+    <label>ID Utilisateur <input type="text" id="user-id-utilisateur" placeholder="ex: ETU-2026-001" required></label>
+    <label>Nom <input type="text" id="user-nom" required></label>
+    <label>Prénom <input type="text" id="user-prenom" required></label>
+    <label>Email <input type="email" id="user-email" required></label>
+    <label>Téléphone <input type="tel" id="user-telephone" placeholder="ex: 77 000 00 00"></label>
+    <label>Type
+      <select id="user-type" required>
+        <option value="etudiant">Étudiant</option>
+        <option value="professeur">Professeur</option>
+        <option value="personnel_administratif">Personnel administratif</option>
+      </select>
+    </label>
+    <label>Faculté <input type="text" id="user-faculte"></label>
+    <label>Département <input type="text" id="user-departement"></label>
+    <label>Classe <input type="text" id="user-classe"></label>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close>Annuler</button>
+      <button type="submit" class="btn-primary">Enregistrer</button>
+    </div>
+  </form>
+</div>
+
+<div class="modal-overlay" id="modal-loan">
+  <form class="modal-card" id="form-loan">
+    <h3>Nouvel emprunt</h3>
+    <label>Utilisateur
+      <select id="loan-user-id" required></select>
+    </label>
+    <label>ISBN du livre <input type="text" id="loan-isbn" required placeholder="ex: 978-1"></label>
+    <label>Durée (jours) <input type="number" id="loan-duree" min="1" value="14" required></label>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close>Annuler</button>
+      <button type="submit" class="btn-primary">Emprunter</button>
+    </div>
+  </form>
+</div>
+
+<div class="modal-overlay" id="modal-return">
+  <form class="modal-card" id="form-return">
+    <h3>Retour de livre</h3>
+    <input type="hidden" id="return-loan-id">
+    <label>État du livre
+      <select id="return-observations">
+        <option value="bon_etat">Bon état</option>
+        <option value="abime">Abîmé</option>
+        <option value="">Non précisé</option>
+      </select>
+    </label>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close>Annuler</button>
+      <button type="submit" class="btn-primary">Confirmer le retour</button>
+    </div>
+  </form>
+</div>
+
+<div class="modal-overlay" id="modal-password">
+  <form class="modal-card" id="form-password">
+    <h3>Changer mon mot de passe</h3>
+    <label>Ancien mot de passe <input type="password" id="pwd-ancien" required></label>
+    <label>Nouveau mot de passe <input type="password" id="pwd-nouveau" required minlength="4"></label>
+    <label>Confirmer le nouveau mot de passe <input type="password" id="pwd-confirmation" required minlength="4"></label>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-close>Annuler</button>
+      <button type="submit" class="btn-primary">Mettre à jour</button>
+    </div>
+  </form>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+DIAGNOSTIC ET CORRECTIONS — VERSION STABLE V2
+=============================================
+
+Problèmes signalés
+------------------
+1. Le filtre Tous les types dans la section Utilisateurs ne prenait pas correctement en compte les types Étudiant, Professeur et Personnel administratif.
+2. Le filtre Personnel administratif n'affichait pas les personnes associées.
+3. Dans Nouvel emprunt, la liste déroulante des emprunteurs était vide.
+4. La connexion admin pouvait échouer avec 500 Internal Server Error.
+5. Certaines erreurs FastAPI/Pydantic pouvaient apparaître côté interface sous forme [object Object].
+
+Causes identifiées
+------------------
+- Incohérences possibles entre les libellés affichés côté frontend et les valeurs techniques attendues côté backend.
+- Le chargement de la liste des emprunteurs masquait les erreurs avec catch vide, donc la liste restait vide sans explication.
+- Le compte admin créé dans certaines versions utilisait une adresse locale de type admin@bibliotheque.local, pouvant provoquer des erreurs de validation de réponse.
+- Le mot de passe du compte admin existant n'était pas forcément remis à la valeur attendue.
+
+Corrections appliquées
+----------------------
+- Normalisation backend des valeurs type_utilisateur : etudiant, professeur, personnel_administratif, libellés avec espaces, valeurs tous/all.
+- Correction du seed admin : admin@bibliotheque.com, type Personnel administratif, mot de passe Admin123! vérifié au démarrage.
+- Assouplissement de la validation email en sortie pour éviter les erreurs 500 sur anciennes données.
+- Correction frontend de populateLoanUserSelect() : chargement explicite des utilisateurs, option par défaut, message d'erreur visible.
+- Contrôle avant création d'un emprunt : impossible de valider sans emprunteur sélectionné.
+- Conservation des options frontend correctes :
+  - value="" = Tous les types
+  - value="etudiant" = Étudiant
+  - value="professeur" = Professeur
+  - value="personnel_administratif" = Personnel administratif
+
+Tests recommandés
+-----------------
+1. docker compose down -v
+2. docker compose up --build
+3. Connexion sur http://localhost:8080 avec admin / Admin123!
+4. Créer trois utilisateurs : un étudiant, un professeur, un personnel administratif.
+5. Tester les filtres Utilisateurs.
+6. Ouvrir Nouvel emprunt et vérifier que la liste des emprunteurs est remplie.

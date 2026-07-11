@@ -1,0 +1,73 @@
+BIBLIOTHÈQUE NUMÉRIQUE DIT — VERSION STABLE V2
+=================================================
+
+1) DÉMARRER L'APPLICATION
+-------------------------
+Depuis le dossier du projet :
+
+    docker compose down
+    docker compose up --build
+
+Si vous voulez repartir d'une base de données propre :
+
+    docker compose down -v
+    docker compose up --build
+
+2) ADRESSES À OUVRIR
+--------------------
+Frontend :
+
+    http://localhost:8080
+
+Swagger Service-Utilisateur :
+
+    http://localhost:8002/docs
+
+Test santé Service-Utilisateur :
+
+    http://localhost:8002/health
+
+3) IDENTIFIANTS ADMIN PAR DÉFAUT
+--------------------------------
+Un compte Personnel administratif est créé/vérifié automatiquement au démarrage.
+
+Identifiant : admin
+Mot de passe : Admin123!
+Email : admin@bibliotheque.com
+
+Important : en version V2, si le compte admin existe déjà, son mot de passe est remis à Admin123! au démarrage afin d'éviter le blocage de connexion pendant les tests.
+
+4) CRÉER DES UTILISATEURS
+-------------------------
+Après connexion comme admin :
+
+- Aller dans l'onglet Utilisateurs.
+- Cliquer sur + Nouvel utilisateur.
+- Choisir le type : Étudiant, Professeur ou Personnel administratif.
+- Le mot de passe initial des utilisateurs créés est leur ID utilisateur.
+
+Exemple :
+ID utilisateur : ETU-2026-001
+Mot de passe initial : ETU-2026-001
+
+5) CORRECTIONS V2 APPORTÉES
+---------------------------
+- Correction du compte admin par défaut.
+- Correction de l'erreur 500 au login liée aux anciens emails locaux.
+- Correction de l'affichage des erreurs API : plus de [object Object].
+- Correction des filtres utilisateurs : Tous les types, Étudiant, Professeur, Personnel administratif.
+- Correction du filtre Personnel administratif.
+- Correction de la liste déroulante Nouvel emprunt : les emprunteurs sont chargés depuis Service-Utilisateur.
+- Ajout de messages explicites si la liste d'emprunteurs ne peut pas être chargée.
+
+6) EN CAS DE PROBLÈME
+---------------------
+Vérifier les logs :
+
+    docker compose logs service-utilisateur
+    docker compose logs service-emprunt
+    docker compose logs service-livre
+
+Vérifier les conteneurs :
+
+    docker compose ps

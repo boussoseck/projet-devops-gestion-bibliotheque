@@ -1,0 +1,116 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: bibliotheque-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bibliotheque-net
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: bibliotheque-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@bibliotheque.com
+      PGADMIN_DEFAULT_PASSWORD: Admin123!
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bibliotheque-net
+
+  service-livre:
+    build: ./Service-Livre
+    container_name: service-livre
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/books_db
+      SERVICE_UTILISATEUR_URL: http://service-utilisateur:8002
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-utilisateur:
+        condition: service_started
+    networks:
+      - bibliotheque-net
+
+  service-utilisateur:
+    build: ./Service-Utilisateur
+    container_name: service-utilisateur
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/users_db
+      SEED_DEFAULT_ADMIN: "true"
+      DEFAULT_ADMIN_ID: admin
+      DEFAULT_ADMIN_PASSWORD: Admin123!
+      DEFAULT_ADMIN_EMAIL: admin@bibliotheque.com
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bibliotheque-net
+
+  service-emprunt:
+    build: ./Service-Emprunt
+    container_name: service-emprunt
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/loans_db
+      SERVICE_LIVRE_URL: http://service-livre:8001
+      SERVICE_UTILISATEUR_URL: http://service-utilisateur:8002
+    ports:
+      - "8003:8003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-livre:
+        condition: service_started
+      service-utilisateur:
+        condition: service_started
+    networks:
+      - bibliotheque-net
+
+  frontend:
+    build: ./frontend
+    container_name: bibliotheque-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - service-livre
+      - service-utilisateur
+      - service-emprunt
+    networks:
+      - bibliotheque-net
+
+volumes:
+  postgres-data:
+  pgadmin-data:
+
+networks:
+  bibliotheque-net:
+    driver: bridge
