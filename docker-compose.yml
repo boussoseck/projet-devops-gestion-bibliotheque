@@ -1,4 +1,4 @@
-version: "3.9"
+# version: "3.9"
 
 services:
 
@@ -107,9 +107,26 @@ services:
     networks:
       - bibliotheque-net
 
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
+    container_name: bibliotheque-jenkins
+    user: root
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - bibliotheque-net
+
 volumes:
   postgres-data:
   pgadmin-data:
+  jenkins-data:
 
 networks:
   bibliotheque-net:
