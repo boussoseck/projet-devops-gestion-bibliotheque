@@ -3,16 +3,16 @@ pipeline {
 
     environment {
         DOCKER_COMPOSE_FILE = "docker-compose.yml"
-        REGISTRY_NAMESPACE  = "dit-bibliotheque"
+        REGISTRY_NAMESPACE = "dit-bibliotheque"
     }
 
     options {
         timestamps()
         disableConcurrentBuilds()
+        skipDefaultCheckout(true)
     }
 
     stages {
-
         stage('Récupération du code') {
             steps {
                 echo "Clonage du dépôt depuis GitHub..."
@@ -20,10 +20,24 @@ pipeline {
             }
         }
 
+        stage('Vérification des outils') {
+            steps {
+                sh '''
+                    echo "Vérification des outils nécessaires..."
+                    git --version
+                    python3 --version
+                    pip3 --version
+                    docker --version
+                    docker-compose --version
+                    curl --version
+                '''
+            }
+        }
+
         stage('Vérification de la structure') {
             steps {
                 sh '''
-                    echo "Vérification des fichiers essentiels du projet"
+                    echo "Vérification des fichiers essentiels du projet..."
                     test -f docker-compose.yml
                     test -f Service-Livre/Dockerfile
                     test -f Service-Utilisateur/Dockerfile
@@ -37,11 +51,11 @@ pipeline {
             steps {
                 dir('Service-Livre') {
                     sh '''
+                        rm -rf venv
                         python3 -m venv venv
                         . venv/bin/activate
                         pip install --no-cache-dir -r requirements.txt
                         python -m py_compile app/*.py
-                        deactivate
                     '''
                 }
             }
@@ -51,11 +65,11 @@ pipeline {
             steps {
                 dir('Service-Utilisateur') {
                     sh '''
+                        rm -rf venv
                         python3 -m venv venv
                         . venv/bin/activate
                         pip install --no-cache-dir -r requirements.txt
                         python -m py_compile app/*.py
-                        deactivate
                     '''
                 }
             }
@@ -65,11 +79,11 @@ pipeline {
             steps {
                 dir('Service-Emprunt') {
                     sh '''
+                        rm -rf venv
                         python3 -m venv venv
                         . venv/bin/activate
                         pip install --no-cache-dir -r requirements.txt
                         python -m py_compile app/*.py
-                        deactivate
                     '''
                 }
             }
@@ -78,20 +92,29 @@ pipeline {
         stage('Construction des images Docker') {
             steps {
                 sh '''
-                    echo "Construction de toutes les images via Docker Compose"
-                    docker compose -f ${DOCKER_COMPOSE_FILE} build
+                    echo "Construction des images de l'application..."
+
+                    docker-compose -f ${DOCKER_COMPOSE_FILE} build \
+                        service-utilisateur \
+                        service-livre \
+                        service-emprunt \
+                        frontend
                 '''
             }
         }
 
-        stage('Déploiement (Docker Compose)') {
+        stage('Déploiement avec Docker Compose') {
             steps {
                 sh '''
-                    echo "Arrêt de l'ancien déploiement s'il existe"
-                    docker compose -f ${DOCKER_COMPOSE_FILE} down || true
+                    echo "Démarrage ou mise à jour des services..."
 
-                    echo "Démarrage de la nouvelle version"
-                    docker compose -f ${DOCKER_COMPOSE_FILE} up -d
+                    docker-compose -f ${DOCKER_COMPOSE_FILE} up -d \
+                        postgres \
+                        pgadmin \
+                        service-utilisateur \
+                        service-livre \
+                        service-emprunt \
+                        frontend
 
                     echo "Attente du démarrage des services..."
                     sleep 15
@@ -102,11 +125,23 @@ pipeline {
         stage('Vérification post-déploiement') {
             steps {
                 sh '''
-                    echo "Vérification des endpoints /health de chaque microservice"
-                    curl -sf http://localhost:8001/health
-                    curl -sf http://localhost:8002/health
-                    curl -sf http://localhost:8003/health
-                    curl -sf http://localhost:8080/healthz
+                    echo "Vérification des endpoints de santé..."
+
+                    curl --fail --show-error \
+                        --retry 10 --retry-delay 3 \
+                        http://service-livre:8001/health
+
+                    curl --fail --show-error \
+                        --retry 10 --retry-delay 3 \
+                        http://service-utilisateur:8002/health
+
+                    curl --fail --show-error \
+                        --retry 10 --retry-delay 3 \
+                        http://service-emprunt:8003/health
+
+                    curl --fail --show-error \
+                        --retry 10 --retry-delay 3 \
+                        http://bibliotheque-frontend/healthz
                 '''
             }
         }
@@ -114,13 +149,17 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline exécuté avec succès : Bibliothèque Numérique déployée."
+            echo " Pipeline exécuté avec succès : Bibliothèque Numérique déployée."
         }
+
         failure {
-            echo "❌ Le pipeline a échoué. Consultez les logs ci-dessus."
+            echo " Le pipeline a échoué. Consultez les logs ci-dessus."
         }
+
         always {
-            sh 'docker compose -f ${DOCKER_COMPOSE_FILE} ps || true'
+            sh '''
+                docker-compose -f ${DOCKER_COMPOSE_FILE} ps || true
+            '''
         }
     }
 }
