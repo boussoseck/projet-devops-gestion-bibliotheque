@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_COMPOSE_FILE = "docker-compose.yml"
         REGISTRY_NAMESPACE = "dit-bibliotheque"
+        COMPOSE_PROJECT_NAME = "gestion-bibliotheque"
     }
 
     options {
