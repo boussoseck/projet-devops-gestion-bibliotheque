@@ -106,6 +106,9 @@ pipeline {
         stage('Déploiement avec Docker Compose') {
             steps {
                 sh '''
+                    echo "Nettoyage des anciens conteneurs..."
+                    docker-compose -f ${DOCKER_COMPOSE_FILE} down --remove-orphans || true
+
                     echo "Démarrage ou mise à jour des services..."
 
                     docker-compose -f ${DOCKER_COMPOSE_FILE} up -d \
