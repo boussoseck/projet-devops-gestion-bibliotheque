@@ -131,19 +131,19 @@ pipeline {
                     echo "Vérification des endpoints de santé..."
 
                     curl --fail --show-error \
-                        --retry 10 --retry-delay 3 \
+                        --retry 10 --retry-delay 3 --retry-connrefused \
                         http://service-livre:8001/health
 
                     curl --fail --show-error \
-                        --retry 10 --retry-delay 3 \
+                        --retry 10 --retry-delay 3 --retry-connrefused \
                         http://service-utilisateur:8002/health
 
                     curl --fail --show-error \
-                        --retry 10 --retry-delay 3 \
+                        --retry 10 --retry-delay 3 --retry-connrefused \
                         http://service-emprunt:8003/health
 
                     curl --fail --show-error \
-                        --retry 10 --retry-delay 3 \
+                        --retry 10 --retry-delay 3 --retry-connrefused \
                         http://bibliotheque-frontend/healthz
                 '''
             }
