@@ -109,6 +109,9 @@ pipeline {
                     echo "Nettoyage des anciens conteneurs..."
                     docker-compose -f ${DOCKER_COMPOSE_FILE} down --remove-orphans || true
 
+                    echo "Suppression forcée des conteneurs nommés en conflit..."
+                    docker rm -f bibliotheque-postgres bibliotheque-pgadmin service-livre service-utilisateur service-emprunt bibliotheque-frontend bibliotheque-jenkins || true
+
                     echo "Démarrage ou mise à jour des services..."
 
                     docker-compose -f ${DOCKER_COMPOSE_FILE} up -d \
